@@ -94,34 +94,24 @@
           <div v-if="activeTab === 'products'" class="editor-section">
             <div class="section-header">
               <h2>Editar Productos</h2>
-              <button class="btn-primary" @click="store.addProduct()">+ Añadir Producto</button>
+              <button class="btn-primary" @click="openModal()">+ Añadir Producto</button>
             </div>
             
-            <div v-for="product in store.content.products" :key="product.id" class="sub-section">
-              <div class="sub-section-header">
-                <h3>{{ product.name }}</h3>
-                <button class="btn-delete" @click="store.removeProduct(product.id)">Eliminar</button>
-              </div>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Nombre</label>
-                  <input v-model="product.name" class="form-control" />
+            <div class="products-grid-admin">
+              <div v-for="product in store.content.products" :key="product.id" class="product-item glass-card" :class="{ inactive: !product.active }">
+                <div class="product-info-mini">
+                  <img :src="product.image" :alt="product.name" class="product-thumb">
+                  <div>
+                    <h4>{{ product.name }}</h4>
+                    <span class="price-tag">${{ product.price }}</span>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label>Precio</label>
-                  <input type="number" v-model="product.price" class="form-control" />
-                </div>
-                <div class="form-group">
-                  <label>Imagen (URL)</label>
-                  <input v-model="product.image" class="form-control" />
-                </div>
-                <div class="form-group">
-                  <label>Resumen (Caja)</label>
-                  <textarea v-model="product.description" class="form-control"></textarea>
-                </div>
-                <div class="form-group full">
-                  <label>Descripción Detallada (Modal)</label>
-                  <textarea v-model="product.longDescription" class="form-control" placeholder="Escribe aquí la historia o beneficios detallados del producto..."></textarea>
+                <div class="product-actions">
+                  <button class="btn-status" :class="product.active ? 'active' : 'inactive'" @click="product.active = !product.active">
+                    {{ product.active ? 'Activo' : 'Inactivo' }}
+                  </button>
+                  <button class="btn-edit" @click="openModal(product)">Editar</button>
+                  <button class="btn-delete-mini" @click="store.removeProduct(product.id)">×</button>
                 </div>
               </div>
             </div>
@@ -129,11 +119,59 @@
         </div>
       </main>
     </div>
+
+    <!-- Product Modal -->
+    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content glass-card animate-scale-up">
+        <div class="modal-header">
+          <h3>{{ editingId ? 'Editar Producto' : 'Añadir Nuevo Producto' }}</h3>
+          <button class="btn-close" @click="closeModal">×</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input v-model="formProduct.name" class="form-control" placeholder="Ej: Extracto de Chaga" />
+            </div>
+            <div class="form-group">
+              <label>Precio</label>
+              <input type="number" v-model="formProduct.price" class="form-control" />
+            </div>
+            <div class="form-group full">
+              <label>Imagen (URL)</label>
+              <input v-model="formProduct.image" class="form-control" />
+            </div>
+            <div class="form-group full">
+              <label>Resumen (Caja)</label>
+              <textarea v-model="formProduct.description" class="form-control" placeholder="Breve descripción..."></textarea>
+            </div>
+            <div class="form-group full">
+              <label>Descripción Detallada (Modal)</label>
+              <textarea v-model="formProduct.longDescription" class="form-control" placeholder="Escribe aquí la historia o beneficios del producto..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="formProduct.active">
+                Producto Activo
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="closeModal">Cancelar</button>
+          <button class="btn-primary" @click="saveProduct">
+            {{ editingId ? 'Guardar Cambios' : 'Crear Producto' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useLandingStore } from '../stores/landing'
 
 const store = useLandingStore()
@@ -142,11 +180,57 @@ const password = ref('')
 const error = ref('')
 const activeTab = ref('hero')
 
+// Modal state
+const showModal = ref(false)
+const editingId = ref(null)
+const formProduct = reactive({
+  name: '',
+  price: 0,
+  image: '/images/hero.png',
+  description: '',
+  longDescription: '',
+  active: true
+})
+
 const tabs = [
   { id: 'hero', name: 'Cabecera' },
   { id: 'sections', name: 'Secciones' },
   { id: 'products', name: 'Productos' }
 ]
+
+const openModal = (product = null) => {
+  if (product) {
+    editingId.value = product.id
+    formProduct.name = product.name
+    formProduct.price = product.price
+    formProduct.image = product.image
+    formProduct.description = product.description
+    formProduct.longDescription = product.longDescription
+    formProduct.active = product.active
+  } else {
+    editingId.value = null
+    formProduct.name = ''
+    formProduct.price = 0
+    formProduct.image = '/images/hero.png'
+    formProduct.description = ''
+    formProduct.longDescription = ''
+    formProduct.active = true
+  }
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+}
+
+const saveProduct = () => {
+  if (editingId.value) {
+    store.updateProduct(editingId.value, { ...formProduct })
+  } else {
+    store.addProduct({ ...formProduct })
+  }
+  closeModal()
+}
 
 const login = () => {
   if (password.value === 'admin') {
@@ -365,5 +449,168 @@ textarea.form-control {
 .sub-section h3 {
   margin-bottom: 1.5rem;
   color: var(--primary);
+}
+
+/* Products Admin Grid */
+.products-grid-admin {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-item {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: opacity 0.3s ease;
+}
+
+.product-item.inactive {
+  opacity: 0.6;
+}
+
+.product-info-mini {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.product-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.product-info-mini h4 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.price-tag {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.product-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.btn-status.active {
+  background: rgba(132, 204, 22, 0.1);
+  color: #84cc16;
+  border: 1px solid rgba(132, 204, 22, 0.2);
+}
+
+.btn-status.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-edit {
+  padding: 6px 12px;
+  background: var(--glass-border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.btn-delete-mini {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(239, 68, 68, 0.1);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 { margin: 0; }
+
+.btn-close {
+  background: transparent;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

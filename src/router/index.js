@@ -1,12 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LandingView from '../views/LandingView.vue'
 import AdminView from '../views/AdminView.vue'
+import CheckoutView from '../views/CheckoutView.vue'
 
 const routes = [
     {
         path: '/',
         name: 'landing',
         component: LandingView
+    },
+    {
+        path: '/checkout',
+        name: 'checkout',
+        component: CheckoutView
     },
     {
         path: '/admin',
@@ -29,7 +35,13 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
-    scrollBehavior() {
+    scrollBehavior(to, from, savedPosition) {
+        if (to.hash) {
+            return {
+                el: to.hash,
+                behavior: 'smooth',
+            }
+        }
         return { top: 0 }
     }
 })
