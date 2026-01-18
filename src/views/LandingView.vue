@@ -801,6 +801,102 @@ html {
   transition: color 0.3s ease;
 }
 
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+  .hero-content h1 {
+    font-size: 4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none; /* In a real app, you'd add a hamburger menu here */
+  }
+
+  .hero-content h1 {
+    font-size: 3rem;
+  }
+
+  .hero-content p {
+    font-size: 1.1rem;
+    padding: 0 1rem;
+  }
+
+  .section-content {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    text-align: center;
+  }
+
+  .dynamic-section {
+    padding: 6rem 0;
+  }
+
+  .dynamic-section.reverse .section-content {
+    direction: ltr;
+  }
+
+  .section-text h2 {
+    font-size: 2.2rem;
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+  }
+
+  .products-grid.cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-image {
+    height: 300px;
+  }
+
+  .modal-info {
+    padding: 2rem;
+  }
+
+  .modal-info h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .section-title-group {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .products-grid.cols-3,
+  .products-grid.cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+  }
+
+  .modal-info {
+    padding: 1.5rem;
+  }
+
+  .modal-info h2 {
+    font-size: 1.75rem;
+  }
+
+  .modal-price {
+    font-size: 1.5rem;
+  }
+}
+
 .btn-close-cart:hover {
   color: var(--primary);
 }

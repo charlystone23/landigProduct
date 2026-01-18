@@ -278,16 +278,36 @@ const sendWhatsApp = () => {
   .checkout-grid {
     grid-template-columns: 1fr;
   }
+  .checkout-view {
+    padding: 6rem 0 3rem;
+  }
 }
 
 @media (max-width: 600px) {
+  .checkout-header h1 {
+    font-size: 2rem;
+  }
   .cart-item-detailed {
     flex-wrap: wrap;
     gap: 1rem;
+    padding-bottom: 2rem;
+  }
+  .item-thumb {
+    width: 60px;
+    height: 60px;
   }
   .item-total {
     width: 100%;
     text-align: right;
+    font-size: 1.25rem;
+  }
+  .item-qty {
+    order: 2;
+  }
+  .btn-remove {
+    position: absolute;
+    top: 0;
+    right: 0;
   }
 }
 </style>
