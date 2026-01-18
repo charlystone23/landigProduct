@@ -140,7 +140,13 @@
             </div>
             <div class="form-group full">
               <label>Imagen (URL)</label>
-              <input v-model="formProduct.image" class="form-control" />
+              <div class="url-input-group">
+                <input v-model="formProduct.image" class="form-control" placeholder="https://ejemplo.com/imagen.jpg" />
+                <div class="image-preview-admin glass-card">
+                  <img :src="formProduct.image" @error="handleImageError" alt="Preview" class="preview-img">
+                  <span v-if="imageError" class="preview-error">URL de imagen no válida</span>
+                </div>
+              </div>
             </div>
             <div class="form-group full">
               <label>Resumen (Caja)</label>
@@ -179,6 +185,12 @@ const isAuthenticated = ref(false)
 const password = ref('')
 const error = ref('')
 const activeTab = ref('hero')
+const imageError = ref(false)
+
+const handleImageError = (e) => {
+  imageError.value = true
+  e.target.src = '/images/hero.png' // Fallback
+}
 
 // Modal state
 const showModal = ref(false)
@@ -199,6 +211,7 @@ const tabs = [
 ]
 
 const openModal = (product = null) => {
+  imageError.value = false
   if (product) {
     editingId.value = product.id
     formProduct.name = product.name
@@ -607,6 +620,40 @@ textarea.form-control {
 
 .animate-scale-up {
   animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.url-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.image-preview-admin {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed var(--glass-border);
+}
+
+.preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.preview-error {
+  position: absolute;
+  bottom: 10px;
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
 }
 
 @keyframes scaleUp {

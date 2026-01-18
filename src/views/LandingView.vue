@@ -5,8 +5,8 @@
       <div class="container nav-content">
         <div class="logo">LUXE<span>TECH</span></div>
         <div class="nav-links">
-          <a href="#products">Productos</a>
-          <a href="#features">Características</a>
+          <a href="#" @click.prevent="scrollTo('products')">Productos</a>
+          <a href="#" @click.prevent="scrollTo('features')">Características</a>
           <div class="cart-container" @mouseenter="isCartOpen = true">
             <button class="cart-trigger" @click.stop="isCartOpen = !isCartOpen">
               <span class="icon">🛒</span>
@@ -51,6 +51,7 @@
     </header>
 
     <!-- Sections -->
+    <div id="features"></div>
     <section v-for="(section, index) in store.content.sections" :key="section.id" :id="section.id" class="dynamic-section" :class="{ 'reverse': index % 2 !== 0 }">
       <div class="container section-content">
         <div class="section-text" v-motion-slide-visible-bottom>
