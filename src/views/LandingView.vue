@@ -875,9 +875,8 @@ html {
     gap: 1rem;
   }
 
-  .products-grid.cols-3,
-  .products-grid.cols-2 {
-    grid-template-columns: 1fr;
+  .products-grid.cols-3 {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .modal-content {
