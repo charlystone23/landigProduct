@@ -7,14 +7,35 @@ export const useLandingStore = defineStore('landing', () => {
       title: 'Sabiduría Ancestral en cada Esencia',
       subtitle: 'Reconecta con la naturaleza a través del poder curativo de los hongos medicinales y la medicina tradicional.',
       cta: 'Explorar medicina',
-      image: '/images/hero.png'
+      image: '/hero-texture.jpg'
     },
     sections: [
       {
         id: 'ancestral',
-        title: 'Cultivo Sagrado',
+        title: 'TIPO DE EXTRACTOS',
         text: 'Nuestros hongos son cultivados siguiendo ciclos lunares y métodos ancestrales para preservar su fuerza vital.',
-        image: '/images/section1.png'
+        image: '/images/section1.png',
+        centered: true,
+        categories: [
+          {
+            name: 'Tintura Madre Espagírica',
+            image: '/images/category-tincture.jpg',
+            description: 'Extracto concentrado de alta potencia.',
+            longDescription: 'La tintura madre espagírica captura la esencia completa del hongo, combinando el extracto alcohólico con las sales minerales purificadas de la planta. Este proceso alquímico asegura una biodisponibilidad superior y una potencia máxima.'
+          },
+          {
+            name: 'Aceites',
+            image: '/images/category-oils.jpg',
+            description: 'Aceites infusionados para uso tópico e interno.',
+            longDescription: 'Nuestros aceites medicinales son infusionados lentamente para extraer los compuestos liposolubles de los hongos. Ideales para aplicaciones tópicas o como suplemento dietético suave y nutritivo.'
+          },
+          {
+            name: 'Microdosis',
+            image: '/images/category-microdosis.jpg',
+            description: 'Dosis precisas para integración diaria.',
+            longDescription: 'Las microdosis permiten integrar los beneficios de los hongos medicinales en tu rutina diaria de manera sutil pero efectiva. Perfectas para mantener el equilibrio y la claridad mental sin efectos abrumadores.'
+          }
+        ]
       },
       {
         id: 'science',
@@ -88,11 +109,32 @@ export const useLandingStore = defineStore('landing', () => {
         active: true
       }
     ],
+    topProductsTitle: 'Tipos de extractos',
+    topProducts: [
+      {
+        id: 101,
+        name: 'Pack Energía Ancestral',
+        description: 'La combinación perfecta para tu día a día.',
+        longDescription: 'Este pack incluye nuestro extracto de Melena de León y Cordyceps para darte el enfoque y la energía que necesitas sin caídas.',
+        price: 75,
+        image: '/images/product1.png',
+        active: true
+      },
+      {
+        id: 102,
+        name: 'Kit Inmunidad Total',
+        description: 'Protección profunda para todo el año.',
+        longDescription: 'Combina el poder del Reishi y el Chaga para crear un escudo natural impenetrable contra el estrés y las agresiones externas.',
+        price: 80,
+        image: '/images/product2.png',
+        active: true
+      }
+    ],
     theme: {
-      primary: '#84cc16',
-      secondary: '#10b981',
-      background: '#0c0f0a',
-      text: '#f7fee7'
+      primary: '#59624b',
+      secondary: '#9e7c38',
+      background: '#ede5cf',
+      text: '#2c3520'
     },
     cart: []
   })
@@ -117,6 +159,25 @@ export const useLandingStore = defineStore('landing', () => {
           ...p,
           active: p.active !== undefined ? p.active : true
         }))
+      }
+
+      // Asegurar que topProducts existan
+      if (!parsed.topProductsTitle) {
+        parsed.topProductsTitle = content.value.topProductsTitle
+      }
+      if (!parsed.topProducts) {
+        parsed.topProducts = [...content.value.topProducts]
+      } else {
+        // Asegurar active flag en topProducts
+        parsed.topProducts = parsed.topProducts.map(p => ({
+          ...p,
+          active: p.active !== undefined ? p.active : true
+        }))
+      }
+
+      // Force update hero image to ensure it is /hero-texture.jpg
+      if (parsed.hero) {
+        parsed.hero.image = '/hero-texture.jpg'
       }
 
       // Asegurar que el carrito existe
@@ -146,6 +207,20 @@ export const useLandingStore = defineStore('landing', () => {
     }
   }
 
+  const addSection = () => {
+    const newId = `section-${Date.now()}`
+    content.value.sections.push({
+      id: newId,
+      title: 'Nueva Sección',
+      text: 'Descripción de la nueva sección.',
+      image: '/images/section1.png'
+    })
+  }
+
+  const removeSection = (id) => {
+    content.value.sections = content.value.sections.filter(s => s.id !== id)
+  }
+
   const updateProduct = (id, newData) => {
     const index = content.value.products.findIndex(p => p.id === id)
     if (index !== -1) {
@@ -171,6 +246,34 @@ export const useLandingStore = defineStore('landing', () => {
 
   const removeProduct = (id) => {
     content.value.products = content.value.products.filter(p => p.id !== id)
+  }
+
+  // Top Products Actions
+  const updateTopProduct = (id, newData) => {
+    const index = content.value.topProducts.findIndex(p => p.id === id)
+    if (index !== -1) {
+      content.value.topProducts[index] = { ...content.value.topProducts[index], ...newData }
+    }
+  }
+
+  const addTopProduct = (productData) => {
+    const newId = content.value.topProducts.length > 0
+      ? Math.max(...content.value.topProducts.map(p => p.id)) + 1000 // Unique range
+      : 1001
+
+    content.value.topProducts.push({
+      id: newId,
+      name: productData?.name || 'Nuevo Pack',
+      description: productData?.description || 'Breve descripción.',
+      longDescription: productData?.longDescription || 'Descripción detallada.',
+      price: productData?.price || 0,
+      image: productData?.image || '/images/hero.png',
+      active: productData?.active !== undefined ? productData.active : true
+    })
+  }
+
+  const removeTopProduct = (id) => {
+    content.value.topProducts = content.value.topProducts.filter(p => p.id !== id)
   }
 
   const updateTheme = (newTheme) => {
@@ -215,9 +318,14 @@ export const useLandingStore = defineStore('landing', () => {
     content,
     updateHero,
     updateSection,
+    addSection,
+    removeSection,
     updateProduct,
     addProduct,
     removeProduct,
+    updateTopProduct,
+    addTopProduct,
+    removeTopProduct,
     updateTheme,
     addToCart,
     removeFromCart,

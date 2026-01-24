@@ -3,38 +3,89 @@
     <!-- Navbar -->
     <nav class="navbar" :class="{ 'scrolled': isScrolled }">
       <div class="container nav-content">
-        <div class="logo">LUXE<span>TECH</span></div>
-        <div class="nav-links">
-          <a href="#" @click.prevent="scrollTo('products')">Productos</a>
-          <a href="#" @click.prevent="scrollTo('features')">Características</a>
+        <div class="logo">
+          <img src="/logo.png" alt="Sabor a Monte" class="logo-img" />
+        </div>
+        <div class="nav-actions-mobile">
+          <button class="cart-trigger mobile-cart-trigger" @click.stop="isCartOpen = !isCartOpen">
+             <span class="icon">🛒</span>
+             <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+          </button>
+          <button class="hamburger" @click="toggleMenu" :class="{ 'is-active': isMenuOpen }">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+        </div>
+
+        <div class="nav-links desktop-nav">
+          <a href="#" @click.prevent="scrollTo('features')">TIPO DE EXTRACTOS</a>
+          <a href="#" @click.prevent="scrollTo('products')">PRODUCTOS</a>
           <div class="cart-container" @mouseenter="isCartOpen = true">
             <button class="cart-trigger" @click.stop="isCartOpen = !isCartOpen">
               <span class="icon">🛒</span>
               <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
             </button>
-            <div v-if="isCartOpen" class="cart-dropdown glass-card animate-fade-in" v-click-outside="() => isCartOpen = false">
-              <div class="cart-header">
-                <h4>Tu Carrito</h4>
-                <button class="btn-close-cart" @click.stop="isCartOpen = false">&times;</button>
-              </div>
-              <div v-if="store.content.cart.length === 0" class="empty-cart">
-                El carrito está vacío
-              </div>
-              <div v-else class="cart-items">
-                <div v-for="item in store.content.cart" :key="item.id" class="cart-item">
-                  <span>{{ item.name }} x{{ item.quantity }}</span>
-                  <span>${{ item.price * item.quantity }}</span>
+            <transition name="fade">
+                <div v-if="isCartOpen" class="cart-dropdown glass-card animate-fade-in" v-click-outside="() => isCartOpen = false">
+                <div class="cart-header">
+                    <h4>Tu Carrito</h4>
+                    <button class="btn-close-cart" @click.stop="isCartOpen = false">&times;</button>
                 </div>
-                <div class="cart-total">
-                  <strong>Total:</strong>
-                  <strong>${{ cartTotal }}</strong>
+                <div v-if="store.content.cart.length === 0" class="empty-cart">
+                    El carrito está vacío
                 </div>
-                <button class="btn-primary w-full" @click="checkout">Pagar Ahora</button>
-              </div>
-            </div>
+                <div v-else class="cart-items">
+                    <div v-for="item in store.content.cart" :key="item.id" class="cart-item">
+                    <span>{{ item.name }} x{{ item.quantity }}</span>
+                    <span>${{ item.price * item.quantity }}</span>
+                    </div>
+                    <div class="cart-total">
+                    <strong>Total:</strong>
+                    <strong>${{ cartTotal }}</strong>
+                    </div>
+                    <button class="btn-primary w-full" @click="checkout">Pagar Ahora</button>
+                </div>
+                </div>
+            </transition>
           </div>
         </div>
       </div>
+      
+      <!-- Mobile Menu Overlay -->
+      <transition name="mobile-menu-fade">
+        <div v-if="isMenuOpen" class="mobile-menu">
+            <div class="mobile-menu-content">
+                <a href="#" @click.prevent="scrollTo('features'); closeMenu()" class="mobile-link">TIPO DE EXTRACTOS</a>
+                <a href="#" @click.prevent="scrollTo('products'); closeMenu()" class="mobile-link">PRODUCTOS</a>
+                <a href="#" @click.prevent="router.push('/admin'); closeMenu()" class="mobile-link admin-link">ADMIN</a>
+            </div>
+        </div>
+      </transition>
+
+      <!-- Mobile Cart Dropdown (Separate from desktop to avoid nesting issues) -->
+       <transition name="fade">
+        <div v-if="isCartOpen && isMenuOpen === false" class="cart-dropdown mobile-cart glass-card animate-fade-in" v-click-outside="() => isCartOpen = false">
+             <div class="cart-header">
+                <h4>Tu Carrito</h4>
+                <button class="btn-close-cart" @click.stop="isCartOpen = false">&times;</button>
+            </div>
+            <div v-if="store.content.cart.length === 0" class="empty-cart">
+                El carrito está vacío
+            </div>
+            <div v-else class="cart-items">
+                <div v-for="item in store.content.cart" :key="item.id" class="cart-item">
+                <span>{{ item.name }} x{{ item.quantity }}</span>
+                <span>${{ item.price * item.quantity }}</span>
+                </div>
+                <div class="cart-total">
+                <strong>Total:</strong>
+                <strong>${{ cartTotal }}</strong>
+                </div>
+                <button class="btn-primary w-full" @click="checkout">Pagar Ahora</button>
+            </div>
+        </div>
+       </transition>
     </nav>
 
     <!-- Hero Section -->
@@ -45,21 +96,74 @@
         <h1 class="animate-fade-in-up">{{ store.content.hero.title }}</h1>
         <p class="animate-fade-in-up" style="animation-delay: 0.2s">{{ store.content.hero.subtitle }}</p>
         <div class="hero-btns animate-fade-in-up" style="animation-delay: 0.4s">
-          <button class="btn-primary" @click="scrollTo('products')">{{ store.content.hero.cta }}</button>
+          <button class="btn-secondary" @click="scrollTo('products')">{{ store.content.hero.cta }}</button>
         </div>
       </div>
     </header>
 
+    <!-- Top Products Gallery (Duplicated) -->
+    <section id="products-top" class="products-section gallery-top">
+      <div class="container text-center">
+        <div class="section-title-group">
+          <h2 class="section-title">{{ store.content.topProductsTitle }}</h2>
+          <button class="btn-layout-toggle" @click="toggleGrid" :title="'Cambiar vista: ' + gridCols + ' columnas'">
+            <span v-if="gridCols === 3" class="icon">▦</span>
+            <span v-else-if="gridCols === 2" class="icon">▤</span>
+            <span v-else class="icon">▢</span>
+          </button>
+        </div>
+        <div class="products-grid" :class="'cols-' + gridCols">
+          <div v-for="product in activeTopProducts" :key="'top-' + product.id" class="product-card glass-card" v-motion-fade-visible>
+            <div class="product-img">
+              <img :src="product.image" :alt="product.name" crossorigin="anonymous" />
+            </div>
+            <div class="product-info">
+              <h3>{{ product.name }}</h3>
+              <p>{{ product.description }}</p>
+              <div class="product-footer">
+                <div class="product-actions full-width">
+                  <button class="btn-details" @click="openCategoryModal(product)">Detalles</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
     <!-- Sections -->
     <div id="features"></div>
-    <section v-for="(section, index) in store.content.sections" :key="section.id" :id="section.id" class="dynamic-section" :class="{ 'reverse': index % 2 !== 0 }">
-      <div class="container section-content">
-        <div class="section-text" v-motion-slide-visible-bottom>
+    <section v-for="(section, index) in store.content.sections" :key="section.id" :id="section.id" class="dynamic-section" :class="{ 'reverse': index % 2 !== 0, 'is-centered': section.centered }">
+      <div class="container">
+        <div v-if="section.centered" class="section-header-centered" v-motion-slide-visible-bottom>
           <h2>{{ section.title }}</h2>
           <p>{{ section.text }}</p>
         </div>
-        <div class="section-image" v-motion-roll-visible-right>
-          <img :src="section.image" :alt="section.title" crossorigin="anonymous" />
+        <div v-else class="section-content">
+          <div class="section-text" v-motion-slide-visible-bottom>
+            <h2>{{ section.title }}</h2>
+            <p>{{ section.text }}</p>
+          </div>
+          <div class="section-image" v-motion-roll-visible-right>
+            <img :src="section.image" :alt="section.title" crossorigin="anonymous" />
+          </div>
+        </div>
+
+        <!-- Category Cards (if present) -->
+        <div v-if="section.categories && section.categories.length" class="categories-grid">
+          <div 
+            v-for="(cat, cIndex) in section.categories" 
+            :key="cIndex" 
+            class="category-card glass-card"
+            @click="openCategoryModal(cat)"
+          >
+            <div class="category-img-container">
+              <img :src="cat.image" :alt="cat.name" class="category-img" @error="$event.target.src='/images/hero.png'" />
+            </div>
+            <h3>{{ cat.name }}</h3>
+            <p class="category-short-desc">{{ cat.description }}</p>
+          </div>
         </div>
       </div>
     </section>
@@ -107,11 +211,11 @@
                 <img :src="selectedProduct.image" :alt="selectedProduct.name" crossorigin="anonymous" />
               </div>
               <div class="modal-info">
-                <span class="modal-badge">Producto Ancestral</span>
+                <span class="modal-badge">{{ isCategoryView ? 'Categoría' : 'Producto Ancestral' }}</span>
                 <h2>{{ selectedProduct.name }}</h2>
                 <p class="modal-desc">{{ selectedProduct.longDescription }}</p>
                 
-                <div v-if="isBuying" class="buy-section animate-fade-in">
+                <div v-if="!isCategoryView && isBuying" class="buy-section animate-fade-in">
                   <div class="quantity-selector">
                     <label>Cantidad:</label>
                     <div class="quantity-controls">
@@ -144,7 +248,7 @@
                       <span>Calidad Lab</span>
                     </div>
                   </div>
-                  <div class="modal-footer">
+                  <div class="modal-footer" v-if="!isCategoryView">
                     <span class="modal-price">${{ selectedProduct.price }}</span>
                     <button class="btn-primary" @click="isBuying = true">Comprar Ahora</button>
                   </div>
@@ -159,7 +263,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container text-center">
-        <p>&copy; 2026 LUXETECH. Todos los derechos reservados.</p>
+        <p>&copy; 2026 Sabor a Monte. Todos los derechos reservados.</p>
       </div>
     </footer>
   </div>
@@ -179,6 +283,22 @@ const isBuying = ref(false)
 const selectedProduct = ref(null)
 const orderQuantity = ref(1)
 const gridCols = ref(3)
+const isCategoryView = ref(false)
+
+const isMenuOpen = ref(false)
+const toggleMenu = () => {
+    isMenuOpen.value = !isMenuOpen.value
+    if (isMenuOpen.value) {
+        document.body.style.overflow = 'hidden'
+    } else {
+        document.body.style.overflow = ''
+    }
+}
+
+const closeMenu = () => {
+    isMenuOpen.value = false
+    document.body.style.overflow = ''
+}
 
 const toggleGrid = () => {
   if (gridCols.value === 3) gridCols.value = 2
@@ -205,6 +325,10 @@ const activeProducts = computed(() => {
   return store.content.products.filter(p => p.active)
 })
 
+const activeTopProducts = computed(() => {
+  return store.content.topProducts.filter(p => p.active)
+})
+
 const cartCount = computed(() => {
   return store.content.cart.reduce((total, item) => total + item.quantity, 0)
 })
@@ -225,14 +349,30 @@ const scrollTo = (id) => {
 const openModal = (product, buying = false) => {
   selectedProduct.value = product
   isBuying.value = buying
+  isCategoryView.value = false
   orderQuantity.value = 1
+  isModalOpen.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+const openCategoryModal = (category) => {
+  selectedProduct.value = {
+    ...category,
+    longDescription: category.longDescription || category.description // Fallback
+  }
+  isBuying.value = false
+  isCategoryView.value = true
   isModalOpen.value = true
   document.body.style.overflow = 'hidden'
 }
 
 const closeModal = () => {
   isModalOpen.value = false
-  isBuying.value = false
+  setTimeout(() => {
+    selectedProduct.value = {}
+    isBuying.value = false
+    isCategoryView.value = false
+  }, 300)
   document.body.style.overflow = ''
 }
 
@@ -270,6 +410,13 @@ html {
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
 }
+
+@media (max-width: 1024px) {
+  html {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+}
 </style>
 
 <style scoped>
@@ -285,13 +432,29 @@ html {
   z-index: 1000;
   padding: 1.5rem 0;
   transition: all 0.3s ease;
+  color: var(--bg); /* Usa el mismo color crema del título de marca */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .navbar.scrolled {
-  padding: 1rem 0;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
+  padding: 1.1rem 0; /* Un poco más de aire, no tan comprimido */
+  background: rgba(237, 229, 207, 0.98);
+  backdrop-filter: blur(15px);
   border-bottom: 1px solid var(--glass-border);
+  color: var(--text);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.navbar.scrolled .logo-img {
+  height: 85px; /* Logo un poco más grande para que no se pierda */
+  filter: sepia(1) saturate(3) hue-rotate(60deg) brightness(0.4) drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+@media (min-width: 1200px) {
+  .navbar .container {
+    max-width: 1400px; /* Límitamos el ancho para que no quede 'despegado' del contenido */
+    padding: 0 2rem;
+  }
 }
 
 .nav-content {
@@ -306,8 +469,19 @@ html {
   letter-spacing: 2px;
 }
 
-.logo span {
-  color: var(--primary);
+.logo-img {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  /* Filtro preciso para el color crema/hueso del título 'Sabor a Monte' */
+  filter: brightness(0) invert(0.9) sepia(0.3) saturate(0.4) hue-rotate(5deg) brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 1200px) {
+  .logo-img {
+    height: 120px;
+  }
 }
 
 .nav-links {
@@ -317,18 +491,141 @@ html {
 }
 
 .nav-links a {
-  font-weight: 500;
-  opacity: 0.8;
-  transition: opacity 0.3s;
+  font-family: var(--font-primary);
+  font-weight: 600; /* Increased weight */
+  font-size: 1.2rem; /* Increased size */
+  opacity: 0.9;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.nav-links a:hover {
+.nav-links.desktop-nav a:hover {
   opacity: 1;
 }
 
+
+.nav-actions-mobile {
+    display: none;
+    align-items: center;
+    gap: 0.8rem;
+    margin-left: auto; /* Push to the right */
+}
+
+.hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 20px;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    z-index: 2000;
+    border: none;
+}
+
+.hamburger .bar {
+    width: 100%;
+    height: 2px;
+    background-color: #ede5cf; /* Explicit light color */
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.navbar.scrolled .hamburger .bar,
+.mobile-menu-active .hamburger .bar {
+    background-color: var(--text); /* Dark on scroll or when menu open */
+}
+
+/* Explicitly styling the active state for visibility */
+.hamburger.is-active .bar:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+    background-color: var(--text);
+}
+
+.hamburger.is-active .bar:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.is-active .bar:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+    background-color: var(--text);
+}
+
+.mobile-cart-trigger {
+    color: #ede5cf;
+    border: 1px solid rgba(237, 229, 207, 0.3);
+}
+
+.navbar.scrolled .mobile-cart-trigger {
+    color: var(--text);
+    border-color: var(--glass-border);
+}
+
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(237, 229, 207, 0.98);
+    backdrop-filter: blur(15px);
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-menu-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    text-align: center;
+}
+
+.mobile-link {
+    font-family: var(--font-primary);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.mobile-menu-fade-enter-active,
+.mobile-menu-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.mobile-menu-fade-enter-from,
+.mobile-menu-fade-leave-to {
+  opacity: 0;
+}
+
+.cart-dropdown.mobile-cart {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 350px;
+    right: auto;
+}
+
+
 .admin-link {
-  color: var(--primary) !important;
+  color: inherit !important;
   font-weight: 600 !important;
+}
+
+.admin-link:hover {
+  text-decoration: underline;
+}
+
+.cart-trigger {
+  color: inherit; /* Inherit navbar color */
 }
 
 .hero {
@@ -359,13 +656,21 @@ html {
   transform: scale(1.05);
 }
 
+@media (max-width: 768px) {
+  .hero-bg {
+    background-image: url('/hero-texture.jpg') !important;
+    background-attachment: scroll; /* Better mobile support */
+  }
+}
+
+
 .hero-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.9));
+  background: none;
   z-index: -1;
 }
 
@@ -374,13 +679,15 @@ html {
   line-height: 1.1;
   margin-bottom: 1.5rem;
   max-width: 900px;
+  color: var(--bg); /* Light text on dark overlay */
 }
 
 .hero-content p {
   font-size: 1.25rem;
-  color: var(--text-muted);
+  color: #ede5cf; /* Light cream text */
   max-width: 600px;
   margin: 0 auto 2.5rem;
+  opacity: 0.9;
 }
 
 .dynamic-section {
@@ -415,6 +722,24 @@ html {
 .section-text p {
   font-size: 1.1rem;
   color: var(--text-muted);
+}
+
+.section-header-centered {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 3rem auto;
+}
+
+.section-header-centered h2 {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text);
+}
+
+.section-header-centered p {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  line-height: 1.6;
 }
 
 .section-image img {
@@ -609,68 +934,126 @@ html {
 
 .modal-content {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
+  max-height: 85vh;
   position: relative;
   overflow: hidden;
   padding: 0;
+  background: var(--bg);
+  border-radius: 30px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
 }
 
 .modal-close {
   position: absolute;
   top: 1.5rem;
   right: 1.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  width: 40px;
-  height: 40px;
+  background: rgba(89, 98, 75, 0.2);
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  color: white;
+  font-size: 1.8rem;
+  color: var(--text);
+  transition: all 0.3s ease;
   z-index: 10;
 }
 
 .modal-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  width: 100%;
 }
 
 .modal-image {
-  height: 500px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.02); /* Slight contrast for the image area */
 }
 
 .modal-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Changed from cover to avoid cropping when centered */
+  display: block;
 }
 
 .modal-info {
-  padding: 3rem;
+  padding: 3.5rem;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  max-height: 85vh;
+}
+
+/* Custom Scrollbar for Modal Info */
+.modal-info::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-info::-webkit-scrollbar-track {
+  background: rgba(89, 98, 75, 0.05);
+}
+
+.modal-info::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+  border: 2px solid var(--bg);
+}
+
+.modal-info::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+@media (max-width: 900px) {
+  .modal-content {
+    max-height: 95vh;
+    display: block;
+    overflow-y: auto;
+  }
+  .modal-body {
+    grid-template-columns: 1fr;
+  }
+  .modal-image {
+    height: 300px;
+  }
+  .modal-info {
+    padding: 2rem;
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .modal-badge {
-  color: var(--primary);
+  color: var(--secondary);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 1rem;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+  display: inline-block;
 }
 
 .modal-info h2 {
-  font-size: 2.5rem;
+  font-family: var(--font-primary);
+  font-size: 3rem;
   margin-bottom: 1.5rem;
+  color: var(--text);
+  line-height: 1.1;
 }
 
 .modal-desc {
-  color: var(--text-muted);
-  font-size: 1.1rem;
+  color: var(--text);
+  font-size: 1.2rem;
   line-height: 1.6;
   margin-bottom: 2rem;
+  opacity: 0.9;
 }
 
 .modal-benefits {
@@ -738,13 +1121,14 @@ html {
 .cart-trigger {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
-  padding: 10px;
+  padding: 12px; /* Dlightly larger padding */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
+  font-size: 1.5rem; /* Increased icon size */
 }
 
 .cart-trigger:hover {
@@ -756,8 +1140,8 @@ html {
   position: absolute;
   top: -5px;
   right: -5px;
-  background: var(--primary);
-  color: black;
+  background: var(--secondary);
+  color: white;
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -801,18 +1185,23 @@ html {
   transition: color 0.3s ease;
 }
 
+
 /* Responsive Media Queries */
 @media (max-width: 1024px) {
+  .nav-links.desktop-nav {
+    display: none;
+  }
+  
+  .nav-actions-mobile {
+    display: flex;
+  }
+
   .hero-content h1 {
     font-size: 4rem;
   }
 }
 
 @media (max-width: 768px) {
-  .nav-links {
-    display: none; /* In a real app, you'd add a hamburger menu here */
-  }
-
   .hero-content h1 {
     font-size: 3rem;
   }
@@ -847,22 +1236,6 @@ html {
   .products-grid.cols-3 {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .modal-body {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-image {
-    height: 300px;
-  }
-
-  .modal-info {
-    padding: 2rem;
-  }
-
-  .modal-info h2 {
-    font-size: 2rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -876,15 +1249,31 @@ html {
   }
 
   .products-grid.cols-3 {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+  }
+  
+  /* Robust styling for modal on small screens */
+  .modal-content {
+    max-height: 90vh;
+    display: block;
+    overflow-y: auto;
   }
 
-  .modal-content {
-    max-height: 95vh;
+  .modal-body {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-image {
+    height: 250px;
+    margin-bottom: 0;
   }
 
   .modal-info {
     padding: 1.5rem;
+    max-height: none;
+    overflow-y: visible;
   }
 
   .modal-info h2 {
@@ -896,130 +1285,97 @@ html {
   }
 }
 
-.btn-close-cart:hover {
-  color: var(--primary);
-}
-
-.empty-cart {
-  color: var(--text-muted);
-  text-align: center;
-  padding: 1rem 0;
-}
-
-.cart-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.cart-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-}
-
-.footer {
-  padding: 4rem 0;
-  border-top: 1px solid var(--glass-border);
-  opacity: 0.6;
-  scroll-snap-align: end;
-}
-
-.cart-total {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--glass-border);
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-/* Modal Buy Section */
-.buy-section {
-  margin-top: auto;
-  padding-top: 2rem;
-  border-top: 1px solid var(--glass-border);
-}
-
-.quantity-selector {
-  margin-bottom: 2rem;
-}
-
-.quantity-selector label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: var(--text-muted);
-}
-
-.quantity-controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.btn-qty {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--glass-border);
-  font-size: 1.25rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.btn-qty:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.qty-input {
-  width: 60px;
-  background: transparent;
-  border: 1px solid var(--glass-border);
-  text-align: center;
-  border-radius: 10px;
-  padding: 8px;
-  font-weight: 700;
-  color: white;
-}
-
-.modal-footer.buy {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.price-calc {
-  display: flex;
-  flex-direction: column;
-}
-
-.price-calc .subtext {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-}
-
-.w-full { width: 100%; }
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 @media (max-width: 768px) {
-  .modal-body { grid-template-columns: 1fr; }
-  .modal-image { height: 300px; }
-  .modal-info { padding: 2rem; }
   .modal-info h2 { font-size: 2rem; }
-  .cart-dropdown { right: -60px; width: 280px; }
+  /* .cart-dropdown rule removed to allow mobile-cart to take precedence */
+  .modal-image {
+      height: 250px;
+      margin-bottom: 1rem;
+  }
+  .modal-body {
+      display: flex;
+      flex-direction: column;
+  }
+  .modal-info {
+    padding: 1.5rem;
+  }
 }
 </style>
+
+<style scoped>
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem; /* More space */
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .categories-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+
+
+.category-card {
+  padding: 1.5rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+.category-card:hover {
+  transform: translateY(-10px);
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.5); /* Slightly lighter on hover */
+  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.1);
+}
+
+.category-img-container {
+  width: 100%;
+  height: 250px; /* Match product image height */
+  overflow: hidden;
+  border-radius: 15px;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.category-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.category-card:hover .category-img {
+  transform: scale(1.1);
+}
+
+.category-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+  font-family: var(--font-primary);
+}
+
+.category-short-desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+</style>
+
+<style scoped>
+/* Always hide mobile cart on desktop (larger than 1024px) */
+@media (min-width: 1025px) {
+  .cart-dropdown.mobile-cart {
+    display: none !important;
+  }
+}
+
+</style>
+

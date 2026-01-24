@@ -106,7 +106,9 @@ const sendWhatsApp = () => {
 .checkout-view {
   min-height: 100vh;
   padding: 8rem 0 4rem;
-  background: radial-gradient(circle at top right, #1e1b4b, #0c0f0a);
+  /* Use global solid background color */
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 .checkout-header {
@@ -115,8 +117,15 @@ const sendWhatsApp = () => {
 }
 
 .checkout-header h1 {
+  font-family: var(--font-primary);
   font-size: 3rem;
   margin: 1rem 0 0.5rem;
+  color: var(--text);
+}
+
+.checkout-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
 }
 
 .btn-back {
@@ -129,6 +138,14 @@ const sendWhatsApp = () => {
   cursor: pointer;
   font-family: inherit;
   font-size: 1rem;
+  transition: transform 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-back:hover {
+  transform: translateX(-5px);
 }
 
 .checkout-grid {
@@ -166,6 +183,7 @@ const sendWhatsApp = () => {
   height: 80px;
   border-radius: 12px;
   object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .item-info {
@@ -175,6 +193,8 @@ const sendWhatsApp = () => {
 .item-info h3 {
   margin: 0 0 0.25rem;
   font-size: 1.25rem;
+  font-family: var(--font-primary);
+  color: var(--text);
 }
 
 .unit-price {
@@ -185,21 +205,27 @@ const sendWhatsApp = () => {
 .item-qty {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.5rem;
+  gap: 0.8rem;
+  background: var(--glass-border);
+  padding: 0.4rem;
   border-radius: 10px;
 }
 
 .btn-qty {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: var(--glass-border);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.btn-qty:hover {
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .item-total {
@@ -215,6 +241,11 @@ const sendWhatsApp = () => {
   color: #ef4444;
   font-size: 1.5rem;
   margin-left: 1rem;
+  transition: transform 0.2s;
+}
+
+.btn-remove:hover {
+  transform: scale(1.1);
 }
 
 .checkout-actions {
@@ -227,6 +258,8 @@ const sendWhatsApp = () => {
 .checkout-actions h2 {
   font-size: 1.5rem;
   margin-bottom: 2rem;
+  font-family: var(--font-primary);
+  color: var(--text);
 }
 
 .summary-line {
@@ -234,6 +267,7 @@ const sendWhatsApp = () => {
   justify-content: space-between;
   margin-bottom: 1rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .summary-line.total {
@@ -241,27 +275,29 @@ const sendWhatsApp = () => {
   padding-top: 1rem;
   border-top: 1px solid var(--glass-border);
   color: var(--text);
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
-}
-
-.summary-line .free {
-  color: var(--primary);
-  font-weight: 700;
+  font-family: var(--font-primary);
 }
 
 .btn-whatsapp {
   margin-top: 2rem;
-  padding: 1.25rem !important;
-  font-size: 1.1rem !important;
+  padding: 1rem !important;
+  font-size: 1rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .whatsapp-note {
   margin-top: 1.5rem;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.5;
+  font-style: italic;
 }
 
 .empty-state {
@@ -272,6 +308,7 @@ const sendWhatsApp = () => {
 .empty-state p {
   margin-bottom: 2rem;
   color: var(--text-muted);
+  font-size: 1.2rem;
 }
 
 @media (max-width: 900px) {
@@ -279,35 +316,58 @@ const sendWhatsApp = () => {
     grid-template-columns: 1fr;
   }
   .checkout-view {
-    padding: 6rem 0 3rem;
+    padding: 6rem 1.5rem 3rem;
+  }
+  
+  .checkout-actions {
+    position: static;
+    margin-top: 2rem;
   }
 }
 
 @media (max-width: 600px) {
-  .checkout-header h1 {
-    font-size: 2rem;
+  .checkout-view {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
+  
+  .checkout-header h1 {
+    font-size: 2.2rem;
+  }
+  
   .cart-item-detailed {
     flex-wrap: wrap;
     gap: 1rem;
     padding-bottom: 2rem;
   }
+  
   .item-thumb {
     width: 60px;
     height: 60px;
   }
-  .item-total {
-    width: 100%;
-    text-align: right;
-    font-size: 1.25rem;
+  
+  .item-info {
+    width: calc(100% - 80px); /* Fill remaining space next to image */
+    padding-right: 2.5rem; /* Space for remove button */
   }
+  
   .item-qty {
-    order: 2;
+    order: 3;
+    margin-left: auto; /* Push to right */
   }
+  
+  .item-total {
+    width: auto;
+    order: 2;
+    font-size: 1.25rem;
+    margin-right: auto; /* Push to left */
+  }
+  
   .btn-remove {
     position: absolute;
-    top: 0;
+    top: 0; /* Align with top of item */
     right: 0;
+    margin: 0;
   }
 }
 </style>

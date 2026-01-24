@@ -41,6 +41,10 @@
         </nav>
 
         <router-link to="/" class="btn-view-web">Ver Landing Page</router-link>
+        
+        <button class="btn-save-all" @click="saveEverything">
+          <span>💾</span> Guardar Cambios
+        </button>
       </aside>
 
       <main class="editor-content">
@@ -62,25 +66,48 @@
                 <input v-model="store.content.hero.cta" class="form-control" />
               </div>
               <div class="form-group">
-                <label>Imagen Fondo (URL)</label>
-                <input v-model="store.content.hero.image" class="form-control" />
+                <label>Imagen Fondo</label>
+                <div class="input-with-action">
+                  <input v-model="store.content.hero.image" class="form-control" placeholder="URL o sube una imagen" />
+                  <label class="btn-browse">
+                    <span>📂 Examinar</span>
+                    <input type="file" @change="e => handleFileUpload(e, store.content.hero, 'image')" accept="image/*" hidden />
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Sections Editor -->
           <div v-if="activeTab === 'sections'" class="editor-section">
-            <h2>Editar Secciones</h2>
-            <div v-for="section in store.content.sections" :key="section.id" class="sub-section">
-              <h3>Sección: {{ section.title }}</h3>
+            <div class="section-header">
+              <h2>Editar Secciones</h2>
+              <button class="btn-primary" @click="store.addSection">
+                + Nueva Sección
+              </button>
+            </div>
+            
+            <div v-for="(section, index) in store.content.sections" :key="section.id" class="sub-section">
+              <div class="sub-section-header">
+                <h3>Sección {{ index + 1 }}</h3>
+                <button class="btn-delete-mini" @click="store.removeSection(section.id)" title="Eliminar sección">
+                  🗑️
+                </button>
+              </div>
               <div class="form-grid">
                 <div class="form-group">
                   <label>Título</label>
                   <input v-model="section.title" class="form-control" />
                 </div>
                 <div class="form-group">
-                  <label>Imagen (URL)</label>
-                  <input v-model="section.image" class="form-control" />
+                  <label>Imagen</label>
+                  <div class="input-with-action">
+                    <input v-model="section.image" class="form-control" placeholder="URL o sube una imagen" />
+                    <label class="btn-browse">
+                      <span>📂 Examinar</span>
+                      <input type="file" @change="e => handleFileUpload(e, section, 'image')" accept="image/*" hidden />
+                    </label>
+                  </div>
                 </div>
                 <div class="form-group full">
                   <label>Texto</label>
@@ -90,11 +117,43 @@
             </div>
           </div>
 
+          <!-- Elegidos Editor -->
+          <div v-if="activeTab === 'top-products'" class="editor-section">
+            <div class="section-header">
+              <h2>Editar Tipos de extractos</h2>
+              <button class="btn-primary" @click="openModal(null, true)">+ Añadir Tipo</button>
+            </div>
+
+            <div class="form-group full" style="margin-bottom: 2rem;">
+              <label>Título de la Sección en la Web</label>
+              <input v-model="store.content.topProductsTitle" class="form-control" placeholder="Ej: Elegidos para ti" />
+            </div>
+            
+            <div class="products-grid-admin">
+              <div v-for="product in store.content.topProducts" :key="product.id" class="product-item glass-card" :class="{ inactive: !product.active }">
+                <div class="product-info-mini">
+                  <img :src="product.image" :alt="product.name" class="product-thumb">
+                  <div>
+                    <h4>{{ product.name }}</h4>
+                    <span class="price-tag">${{ product.price }}</span>
+                  </div>
+                </div>
+                <div class="product-actions">
+                  <button class="btn-status" :class="product.active ? 'active' : 'inactive'" @click="product.active = !product.active">
+                    {{ product.active ? 'Activo' : 'Inactivo' }}
+                  </button>
+                  <button class="btn-edit" @click="openModal(product, true)">Editar</button>
+                  <button class="btn-delete-mini" @click="store.removeTopProduct(product.id)">×</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Products Editor -->
           <div v-if="activeTab === 'products'" class="editor-section">
             <div class="section-header">
-              <h2>Editar Productos</h2>
-              <button class="btn-primary" @click="openModal()">+ Añadir Producto</button>
+              <h2>Editar Productos Generales</h2>
+              <button class="btn-primary" @click="openModal(null, false)">+ Añadir Producto</button>
             </div>
             
             <div class="products-grid-admin">
@@ -110,7 +169,7 @@
                   <button class="btn-status" :class="product.active ? 'active' : 'inactive'" @click="product.active = !product.active">
                     {{ product.active ? 'Activo' : 'Inactivo' }}
                   </button>
-                  <button class="btn-edit" @click="openModal(product)">Editar</button>
+                  <button class="btn-edit" @click="openModal(product, false)">Editar</button>
                   <button class="btn-delete-mini" @click="store.removeProduct(product.id)">×</button>
                 </div>
               </div>
@@ -134,17 +193,23 @@
               <label>Nombre</label>
               <input v-model="formProduct.name" class="form-control" placeholder="Ej: Extracto de Chaga" />
             </div>
-            <div class="form-group">
+            <div v-if="!isEditingTop" class="form-group">
               <label>Precio</label>
               <input type="number" v-model="formProduct.price" class="form-control" />
             </div>
             <div class="form-group full">
-              <label>Imagen (URL)</label>
+              <label>Imagen</label>
               <div class="url-input-group">
-                <input v-model="formProduct.image" class="form-control" placeholder="https://ejemplo.com/imagen.jpg" />
+                <div class="input-with-action">
+                  <input v-model="formProduct.image" class="form-control" placeholder="URL o sube una imagen" />
+                  <label class="btn-browse">
+                    <span>📂 Examinar</span>
+                    <input type="file" @change="e => handleFileUpload(e, formProduct, 'image')" accept="image/*" hidden />
+                  </label>
+                </div>
                 <div class="image-preview-admin glass-card">
                   <img :src="formProduct.image" @error="handleImageError" alt="Preview" class="preview-img">
-                  <span v-if="imageError" class="preview-error">URL de imagen no válida</span>
+                  <span v-if="imageError" class="preview-error">Imagen no válida</span>
                 </div>
               </div>
             </div>
@@ -173,6 +238,15 @@
         </div>
       </div>
     </div>
+
+
+    <!-- Notification Toast -->
+    <Transition name="toast">
+      <div v-if="showToast" class="toast-notification glass-card">
+        <span class="icon">✅</span>
+        <span>Cambios guardados correctamente</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -186,6 +260,19 @@ const password = ref('')
 const error = ref('')
 const activeTab = ref('hero')
 const imageError = ref(false)
+const showToast = ref(false)
+
+const handleFileUpload = (event, target, key) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    target[key] = e.target.result // Base64 string
+    imageError.value = false
+  }
+  reader.readAsDataURL(file)
+}
 
 const handleImageError = (e) => {
   imageError.value = true
@@ -207,11 +294,15 @@ const formProduct = reactive({
 const tabs = [
   { id: 'hero', name: 'Cabecera' },
   { id: 'sections', name: 'Secciones' },
-  { id: 'products', name: 'Productos' }
+  { id: 'top-products', name: 'Tipos de extractos' },
+  { id: 'products', name: 'Productos Generales' }
 ]
 
-const openModal = (product = null) => {
+const isEditingTop = ref(false)
+
+const openModal = (product = null, isTop = false) => {
   imageError.value = false
+  isEditingTop.value = isTop
   if (product) {
     editingId.value = product.id
     formProduct.name = product.name
@@ -238,9 +329,17 @@ const closeModal = () => {
 
 const saveProduct = () => {
   if (editingId.value) {
-    store.updateProduct(editingId.value, { ...formProduct })
+    if (isEditingTop.value) {
+      store.updateTopProduct(editingId.value, { ...formProduct })
+    } else {
+      store.updateProduct(editingId.value, { ...formProduct })
+    }
   } else {
-    store.addProduct({ ...formProduct })
+    if (isEditingTop.value) {
+      store.addTopProduct({ ...formProduct })
+    } else {
+      store.addProduct({ ...formProduct })
+    }
   }
   closeModal()
 }
@@ -251,8 +350,19 @@ const login = () => {
     localStorage.setItem('is_auth', 'true')
     error.value = ''
   } else {
-    error.value = 'Contraseña incorrecta'
   }
+}
+
+const saveEverything = () => {
+  // Since we use v-model directly on the store state, data is already updated reactively.
+  // We just need to trigger the save to localStorage (which the store watcher does)
+  // and show a confirmation.
+  store.content = { ...store.content } // Trigger watch
+  
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 3000)
 }
 
 const logout = () => {
@@ -267,29 +377,36 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.admin-view {
-  min-height: 100vh;
-  display: flex;
-  background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
-}
 
-/* Login */
-.login-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-
-.login-card {
-  padding: 3rem;
-  width: 100%;
-  max-width: 450px;
-  text-align: center;
-}
 
 .login-card h2 { margin-bottom: 1rem; }
 .login-card p { color: var(--text-muted); margin-bottom: 2rem; }
+
+.input-with-action {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-browse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  background: var(--glass-border);
+  border: 1px solid var(--text-muted);
+  padding: 0 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-browse:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
 
 .form-group {
   text-align: left;
@@ -305,11 +422,11 @@ onMounted(() => {
 
 .form-control {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--text-muted);
   padding: 12px;
   border-radius: 10px;
-  color: white;
+  color: var(--text);
   font-family: inherit;
   font-size: 1rem;
 }
@@ -317,7 +434,7 @@ onMounted(() => {
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .error-msg {
@@ -336,11 +453,44 @@ onMounted(() => {
 .w-full { width: 100%; }
 
 /* Admin Layout */
+.admin-view {
+  min-height: 100vh;
+  background-image: url('/hero-texture.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  font-family: var(--font-secondary);
+  color: var(--text);
+}
+
 .admin-layout {
   display: flex;
   width: 100%;
   padding: 2rem;
   gap: 2rem;
+  background: rgba(255, 255, 255, 0.4); /* Subtle glass overlay */
+  backdrop-filter: blur(5px);
+}
+
+.login-container {
+  min-height: 100vh;
+  background-image: url('/hero-texture.jpg');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem;
+  text-align: center;
+  /* Glass effect inherited from global */
+  background: rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 10px 40px rgba(89, 98, 75, 0.2);
 }
 
 .sidebar {
@@ -349,6 +499,9 @@ onMounted(() => {
   padding: 2rem;
   display: flex;
   flex-direction: column;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
 }
 
 .sidebar-header {
@@ -385,6 +538,7 @@ onMounted(() => {
 .sidebar-nav button.active {
   background: var(--primary);
   color: white;
+  box-shadow: 0 4px 12px rgba(89, 98, 75, 0.4);
 }
 
 .btn-view-web {
@@ -721,5 +875,53 @@ textarea.form-control {
     align-items: flex-start;
     gap: 1rem;
   }
+}
+
+
+/* Toast Notification */
+.btn-save-all {
+  margin-top: 1rem;
+  padding: 12px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+
+.btn-save-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(89, 98, 75, 0.4);
+}
+
+.toast-notification {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  background: rgba(132, 204, 22, 0.9) !important; /* Greenish */
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 3000;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  font-weight: 600;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.9);
 }
 </style>
